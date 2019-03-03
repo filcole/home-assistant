@@ -32,15 +32,15 @@ DATA_RANGE_AC = 'range_ac_on'
 DATA_RANGE_AC_OFF = 'range_ac_off'
 
 CONF_NCONNECT = 'nissan_connect'
-CONF_INTERVAL = 'update_interval'
-CONF_CHARGING_INTERVAL = 'update_interval_charging'
-CONF_CLIMATE_INTERVAL = 'update_interval_climate'
+CONF_INTERVAL = 'scan_interval'
+CONF_CHARGING_INTERVAL = 'scan_interval_charging'
+CONF_CLIMATE_INTERVAL = 'scan_interval_climate'
 CONF_REGION = 'region'
 CONF_VALID_REGIONS = ['NNA', 'NE', 'NCI', 'NMA', 'NML']
 CONF_FORCE_MILES = 'force_miles'
 
-INITIAL_UPDATE = timedelta(seconds=15)
-MIN_UPDATE_INTERVAL = timedelta(minutes=2)
+INITIAL_SCAN = timedelta(seconds=15)
+MIN_SCAN_INTERVAL = timedelta(minutes=2)
 DEFAULT_INTERVAL = timedelta(hours=1)
 DEFAULT_CHARGING_INTERVAL = timedelta(minutes=15)
 DEFAULT_CLIMATE_INTERVAL = timedelta(minutes=5)
@@ -58,15 +58,15 @@ CONFIG_SCHEMA = vol.Schema({
         vol.Required(CONF_REGION): vol.In(CONF_VALID_REGIONS),
         vol.Optional(CONF_NCONNECT, default=True): cv.boolean,
         vol.Optional(CONF_INTERVAL, default=DEFAULT_INTERVAL): (
-            vol.All(cv.time_period, vol.Clamp(min=MIN_UPDATE_INTERVAL))),
+            vol.All(cv.time_period, vol.Clamp(min=MIN_SCAN_INTERVAL))),
         vol.Optional(CONF_CHARGING_INTERVAL,
                      default=DEFAULT_CHARGING_INTERVAL): (
                          vol.All(cv.time_period,
-                                 vol.Clamp(min=MIN_UPDATE_INTERVAL))),
+                                 vol.Clamp(min=MIN_SCAN_INTERVAL))),
         vol.Optional(CONF_CLIMATE_INTERVAL,
                      default=DEFAULT_CLIMATE_INTERVAL): (
                          vol.All(cv.time_period,
-                                 vol.Clamp(min=MIN_UPDATE_INTERVAL))),
+                                 vol.Clamp(min=MIN_SCAN_INTERVAL))),
         vol.Optional(CONF_FORCE_MILES, default=False): cv.boolean
     })])
 }, extra=vol.ALLOW_EXTRA)
@@ -170,7 +170,7 @@ def setup(hass, config):
                 load_platform(hass, component, DOMAIN, {}, car_config)
 
         async_track_point_in_utc_time(hass, data_store.async_update_data,
-                                      utcnow() + INITIAL_UPDATE)
+                                      utcnow() + INITIAL_SCAN)
 
     hass.data[DATA_LEAF] = {}
     for car in config[DOMAIN]:
@@ -232,7 +232,7 @@ class LeafDataStore:
             self.hass, self.async_update_data, self.next_update)
 
     def get_next_interval(self):
-        """Calculate when the next update should occur."""
+        """Calculate when the next update/scan should occur."""
         base_interval = self.car_config[CONF_INTERVAL]
         climate_interval = self.car_config[CONF_CLIMATE_INTERVAL]
         charging_interval = self.car_config[CONF_CHARGING_INTERVAL]
